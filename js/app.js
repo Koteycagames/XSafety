@@ -289,20 +289,27 @@ async function playScan() {
 
     const period = periodStart();
     const bytesUsed = state.file.size;
-    const counter = await consumeUsage(state.user.uid, state.selectedModel, period, bytesUsed, snapshot.requests_limit);
-    if (!counter) {
+    let counter = null;
+    let quotaFailed = false;
+    try {
+      counter = await consumeUsage(state.user.uid, state.selectedModel, period, bytesUsed, snapshot.requests_limit);
+    } catch (error) {
+      quotaFailed = true;
+      toast(`Firebase отклонил запись лимита: ${error.message}. Проверьте, что применены правила database.rules.json.`, false);
+    }
+    if (counter === null && !quotaFailed) {
       progress(0);
       toast("Лимит исчерпан: другой запрос уже израсходовал остаток", false);
       state.profile = await loadProfile(state.user.uid);
       renderModels();
       return;
     }
-    state.profile.usage = { ...(state.profile.usage || {}), [state.selectedModel]: counter };
+    if (counter) state.profile.usage = { ...(state.profile.usage || {}), [state.selectedModel]: counter };
 
     try {
       await saveScan(state.user.uid, result);
     } catch (error) {
-      toast(`Отчёт не сохранён в истории: ${error.message}`, false);
+      toast(`Отчёт не сохранён в истории: ${error.message}. Проверьте правила базы.`, false);
     }
 
     state.lastResult = result;
