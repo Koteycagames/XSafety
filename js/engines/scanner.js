@@ -62,11 +62,11 @@ const DANGEROUS_CALLS = [
  [/\bgetattr\s*\(/,25,"getattr — динамический доступ к функциям"], [/subprocess\.|os\.system|os\.popen|child_process|execSync|spawn\s*\(/,30,"Запуск внешних процессов"],
  [/WScript\.Shell|\.Run\s*\(|ShellExecute|CreateObject\s*\(/,30,"Запуск через Shell/CreateObject"],
  [/Invoke-Expression|\bIEX\b|DownloadString|DownloadFile|WebClient/,35,"PowerShell download-cradle / IEX"],
- [/atob\s*\(|Buffer\.from\s*\([^)]*['"]base64/,20,"Декодирование Base64 в рантайме"], [/powershell|cmd\.exe|mshta|wscript|cscript/i,18,"Вызов интерпретаторов/хостов"],
+ [/atob\s*\(|Buffer\.from\s*\([^)]*['"]base64/,20,"Декодирование Base64 в рантайме"], [/powershell|cmd\.exe|mshta|wscript|cscript/i,10,"Вызов интерпретаторов/хостов"],
 ];
 
 /* ---------- 1.2 Авто-декодеры ---------- */
-function tryDecodePayloads(text, level, add, scanTextFn){
+function tryDecodePayloads(text, level, add, scanTextFn, ext=''){
   // Base64 (стандартный + URL-safe), рекурсивно до глубины 2
   const seen=new Set();
   const walk=(txt,depth)=>{
@@ -89,7 +89,8 @@ function tryDecodePayloads(text, level, add, scanTextFn){
     add(24,"Декодирован char-массив",dec.slice(0,120)); scanTextFn(dec,"char[]");
   }
   if(level>=4){ // XOR-цикл: не только слово xor — любая побитовая расшифровка в цикле
-    if(/(for|while|foreach)[\s\S]{0,300}?(\^|bxor|-bxor|BitConverter)/i.test(text)) add(26,"Цикл побитовой (XOR) расшифровки","");
+    const isBat = (ext==="bat"||ext==="cmd");
+    if(!isBat && /(for|while|foreach)[\s\S]{0,300}?(\bxor\b|bxor|-bxor|BitConverter|\w\s*\^=|\w+\[[^\]]+\]\s*\^\s*\w)/i.test(text)) add(26,"Цикл побитовой (XOR) расшифровки","");
     // Одно-байтный XOR-брут по длинным hex/base64-блобам: ищем читаемый ASCII
     for(const m of text.match(/[0-9a-fA-F]{80,}/g)||[]){ const raw=Uint8Array.from(m.match(/../g).map(h=>parseInt(h,16)));
       for(let k=1;k<256;k++){ const dec=td.decode(raw.map(b=>b^k)); if(/powershell|http|cmd|eval|MZ/i.test(dec)){ add(35,"XOR-пейлоад вскрыт перебором ключа",`key=0x${k.toString(16)} ${dec.slice(0,80)}`); scanTextFn(dec,"xor"); break; } } }
@@ -202,14 +203,14 @@ export async function scanFile(file, modelId, onProgress=()=>{}){
   const isScript=["bat","cmd","py","pyw","js","jse","vbs","vbe","hta","ps1","ps1xml","ps2","ps2xml","psc1","psc2"].includes(ext)||(!magic&&bytes.length<2_000_000);
   if(isScript){
     const raw=text; scanText(raw);
-    if(level>=1){ const norm=normalizeBat(raw); if(norm!==raw){ add(10,"BAT-деобфускация применена","убраны ^ и развёрнуты переменные"); scanText(norm,"после деобфускации BAT"); } }
+    if(level>=1){ const norm=normalizeBat(raw); if(norm!==raw){ add(0,"ℹ️ BAT: убраны ^ и развёрнуты переменные","нормалзация для анализа, не угроза"); scanText(norm,"после деобфускации BAT"); } }
     if(level>=2){ const norm=normalizeScript(raw,ext); scanText(norm,"после нормализации");
       for(const [re,w,cat] of DANGEROUS_CALLS){ if(re.test(norm)) add(w,cat,(norm.match(re)||[])[0]); }
       if(/['"`]\s*\+|fromCharCode|chr\s*\(|\[\s*['"]/.test(raw)) add(14,"Обфускация конкатенацией/кодами символов","имена функций склеены из кусков"); }
   } else scanText(text);
   onProgress(45);
 
-  tryDecodePayloads(text, level, add, scanText);
+  tryDecodePayloads(text, level, add, scanText, ext);
   onProgress(60);
 
   // --- Бинари: PE ---
@@ -239,7 +240,18 @@ export async function scanFile(file, modelId, onProgress=()=>{}){
   for(const w of SUSPICIOUS_WORDS){ if(level>=2&&file.name.toLowerCase().includes(w)) add(12,"Подозрительное имя файла",w); }
   onProgress(95);
 
-  const score=Math.min(100,findings.reduce((a,f)=>a+f.score,0));
+  // --- Калибровка: обычный установщик != вирус ---
+  // install/setup в имени + mkdir/copy/robocopy + чистка %TEMP%/%~dp0 и нет тяжёлых находок (>=30) => скидка
+  const lowerAll=text.toLowerCase();
+  let benignSignals=0;
+  if(/install|setup|update|installer/.test(file.name.toLowerCase())) benignSignals++;
+  if(/\b(mkdir|md|xcopy|robocopy|copy|move)\b/.test(lowerAll)) benignSignals++;
+  if(/%temp%|%tmp%|%~dp0|%localappdata%\\temp/.test(lowerAll)) benignSignals++;
+  if(/\b(echo|pause|exit\b|goto\b)/.test(lowerAll)) benignSignals++;
+  const hasSevere=findings.some(f=>f.score>=30);
+  let rawScore=findings.reduce((a,f)=>a+f.score,0);
+  if(benignSignals>=2 && !hasSevere && rawScore>0){ add(0,"ℹ️ Признаки обычного установщика",`сигналов: ${benignSignals}, тяжёлых находок нет — применена скидка -20`); rawScore=Math.max(0,rawScore-20); }
+  const score=Math.min(100,rawScore);
   let verdict=score>=50?"ОПАСНО":score>=20?"ПОДОЗРИТЕЛЬНО":"ЧИСТО";
   if(verdict==="ЧИСТО"&&minVerdict>=1) verdict="ПОДОЗРИТЕЛЬНО";
   onProgress(100);

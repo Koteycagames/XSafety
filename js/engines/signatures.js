@@ -2,7 +2,8 @@
 export const LEVEL_NUM = { v1:1, v2:2, lite:3, pro:4 };
 export const SIGNATURES = [
  // --- Уровень 1: базовые, грубые угрозы (BAT/PY) ---
- {min:1, w:35, cat:"Удаление данных", re:/(rd|rmdir)\s+\/s\s+\/q|del\s+\/[fq]|format\s+[a-z]:|shutil\.rmtree|os\.remove|os\.system\s*\(/i},
+ {min:1, w:40, cat:"КРИТИЧНОЕ удаление (система/диск)", re:/(rd|rmdir)\s+\/s\s+\/q\s+["']?([a-z]:\\?["'\s]|%windir%|%systemroot%|%userprofile%)|format\s+[a-z]:|vssadmin\s+delete|wbadmin\s+delete|shutil\.rmtree\(\s*['"]\/|rmtree\(\s*['"][a-z]:/i},
+ {min:1, w:12, cat:"Удаление файлов/папок", re:/(rd|rmdir)\s+\/s\s+\/q|del\s+\/[fq]|shutil\.rmtree|os\.remove|os\.system\s*\(/i},
  {min:1, w:30, cat:"Загрузка из сети", re:/curl\s+.*-o|wget\s+http|urllib\.request|requests\.get\s*\(|powershell.*downloadstring|certutil\s+-urlcache/i},
  {min:1, w:30, cat:"Выполнение кода", re:/\beval\s*\(|\bexec\s*\(|subprocess\.(Popen|call|run)|os\.popen|start\s+.*\.exe/i},
  {min:1, w:25, cat:"Скрытый запуск", re:/start\s+\/min|start\s+\/b|windowstyle\s+hidden|-windowstyle\s+hidden|pythonw/i},
@@ -14,7 +15,7 @@ export const SIGNATURES = [
  {min:2, w:25, cat:"HTA / MSHTA", re:/mshta|application\.hta|<hta:/i},
  {min:2, w:25, cat:"Обход защиты", re:/Set-MpPreference|Add-MpPreference\s+-Exclusion|amsi|bypass|ExecutionPolicy\s+Unrestricted|-ExecutionPolicy\s+Bypass/i},
  // --- Уровень 3 Lite: глубокий анализ ---
- {min:3, w:40, cat:"Зашифрованный пейлоад", re:/base64|b64decode|a2b_base64|FromBase64String|::FromBase64String|\^.{0,3}\^|xor|RC4|AES|decrypt|decode\(\)/i},
+ {min:3, w:40, cat:"Зашифрованный пейлоад", re:/base64|b64decode|a2b_base64|FromBase64String|::FromBase64String|xor|RC4|AES|decrypt|decode\(\)/i},
  {min:3, w:35, cat:"Encoded PowerShell", re:/powershell(\.exe)?\s+.*-(enc|encodedcommand|e)\s+[A-Za-z0-9+\/=]{40,}/i},
  {min:3, w:35, cat:"Макросы Office", re:/Auto_Open|Workbook_Open|Document_Open|Shell\s*\(|CreateObject|Declare\s+PtrSafe|VirtualAlloc/i},
  {min:3, w:30, cat:"Инъекция в процесс", re:/VirtualAllocEx|WriteProcessMemory|CreateRemoteThread|NtUnmapViewOfSection|ProcessHollowing|ReflectiveLoader/i},
