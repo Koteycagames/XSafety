@@ -21,15 +21,14 @@
         },
         "usage": {
           "$model": {
-            ".validate": "($model === 'v1' || $model === 'v2' || $model === 'lite' || $model === 'pro') && newData.isNumber() && newData.val() >= 0 && ((!data.exists() && newData.val() === 0) || auth.token.email === 'Koteyca@gmail.com' || newData.val() === data.val() || newData.val() === data.val() + 1)"
+            ".validate": "newData.isNumber() && newData.val() >= 0 && ((!data.exists() && newData.val() === 0) || auth.token.email === 'Koteyca@gmail.com' || newData.val() === data.val() || newData.val() === data.val() + 1)"
           }
         },
         "extra": {
           "$model": {
-            ".validate": "($model === 'v1' || $model === 'v2' || $model === 'lite' || $model === 'pro') && newData.isNumber() && newData.val() >= 0 && ((!data.exists() && newData.val() === 0) || newData.val() === data.val() || auth.token.email === 'Koteyca@gmail.com')"
+            ".validate": "newData.isNumber() && newData.val() >= 0 && ((!data.exists() && newData.val() === 0) || newData.val() === data.val() || auth.token.email === 'Koteyca@gmail.com')"
           }
-        },
-        "$other": { ".validate": false }
+        }
       }
     },
     "scans": {
@@ -38,15 +37,23 @@
         ".write": "auth != null && auth.uid === $uid",
         "$scan": {
           ".validate": "newData.hasChildren(['fileName', 'verdict', 'score', 'scannedAt'])",
-          "fileName": { ".validate": "newData.isString() && newData.val().length <= 300" },
-          "verdict": { ".validate": "newData.val() === 'ЧИСТО' || newData.val() === 'ПОДОЗРИТЕЛЬНО' || newData.val() === 'ОПАСНО'" },
-          "score": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
-          "size": { ".validate": "newData.isNumber() && newData.val() >= 0" },
-          "scannedAt": { ".validate": "newData.isNumber() && newData.val() <= now" },
-          "$other": { ".validate": true }
+          "fileName": {
+            ".validate": "newData.isString() && newData.val().length <= 300"
+          },
+          "verdict": {
+            ".validate": "newData.val() === 'ЧИСТО' || newData.val() === 'ПОДОЗРИТЕЛЬНО' || newData.val() === 'ОПАСНО'"
+          },
+          "score": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
+          },
+          "size": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "scannedAt": {
+            ".validate": "newData.isNumber() && newData.val() <= now"
+          }
         }
       }
-    },
-    "$other": { ".read": false, ".write": false }
+    }
   }
 }
