@@ -83,7 +83,7 @@ async function runScan(){
     }catch(e){ dbFail(e); }
     const cls = res.verdict==="ОПАСНО"?"bad":res.verdict==="ПОДОЗРИТЕЛЬНО"?"warn":"good";
     $("#result").innerHTML=`<div class="verdict ${cls}"><h2>${res.verdict==="ЧИСТО"?"✅":res.verdict==="ОПАСНО"?"🦠":"⚠️"} ${res.verdict} — ${res.score}/100</h2>
-      <p>${escapeHtml(res.fileName)} • ${(res.size/1024).toFixed(1)} КБ • ${MODELS[selectedModel].name} • энтропия ${res.entropy}</p>
+      <p>${escapeHtml(res.fileName)} • ${(res.size/1024).toFixed(1)} КБ • ${MODELS[selectedModel].name} • реальный тип: <b>${res.magic||'?'}</b> • энтропия ${res.entropy}</p>
       <p class="hash">SHA-256: ${res.sha256}</p>
       ${res.findings.length?`<ul>${res.findings.map(f=>`<li><b>[+${f.score}] ${f.cat}</b> — <code>${escapeHtml(f.detail)}</code></li>`).join("")}</ul>`:"<p>Опасных сигнатур не найдено.</p>"}</div>`;
     renderModels(); toast("Сканирование завершено");
