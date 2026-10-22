@@ -1,0 +1,96 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "users": {
+      ".read": "auth != null && auth.token.email != null && auth.token.email.toLowerCase() === 'koteyca@gmail.com'",
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || (auth.token.email != null && auth.token.email.toLowerCase() === 'koteyca@gmail.com'))",
+        ".write": "auth != null && (auth.uid === $uid || (auth.token.email != null && auth.token.email.toLowerCase() === 'koteyca@gmail.com'))",
+        ".validate": "!newData.exists() || newData.hasChildren(['email', 'plan', 'banned', 'createdAt'])",
+        "email": {
+          ".validate": "newData.isString() && newData.val() === auth.token.email"
+        },
+        "plan": {
+          ".validate": "newData.isString() && newData.val().matches(/^(default|pro|premium)$/)"
+        },
+        "planUntil": {
+          ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0)"
+        },
+        "planOffer": {
+          ".validate": "!newData.exists() || newData.isString()"
+        },
+        "banned": {
+          ".validate": "newData.isBoolean() && ((!data.exists() && newData.val() === false) || auth.uid !== $uid || newData.val() === data.val())"
+        },
+        "createdAt": {
+          ".validate": "newData.isNumber() && (!data.exists() || newData.val() === data.val())"
+        },
+        "usage": {
+          "$model": {
+            ".validate": "newData.hasChildren(['count', 'period'])",
+            "count": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && (!data.exists() || newData.val() >= data.val() || newData.val() === 0)"
+            },
+            "bytes": {
+              ".validate": "newData.isNumber() && newData.val() >= 0"
+            },
+            "period": {
+              ".validate": "newData.isNumber()"
+            }
+          }
+        },
+        "extra": {
+          "$model": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          }
+        }
+      }
+    },
+    "scans": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || (auth.token.email != null && auth.token.email.toLowerCase() === 'koteyca@gmail.com'))",
+        ".write": "auth != null && auth.uid === $uid",
+        "$scan": {
+          ".validate": "newData.hasChildren(['filename', 'verdict', 'scannedAt'])",
+          "verdict": {
+            ".validate": "newData.val() === 'clean' || newData.val() === 'suspicious' || newData.val() === 'malicious'"
+          },
+          "model": {
+            ".validate": "newData.isString() && newData.val().matches(/^(m1|m2|m3_lite|m3_pro)$/)"
+          },
+          "size": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "sha256": {
+            ".validate": "newData.isString() && newData.val().length <= 128"
+          },
+          "scannedAt": {
+            ".validate": "newData.isNumber() && newData.val() <= now"
+          },
+          "filename": {
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 300"
+          }
+        }
+      }
+    },
+    "purchases": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || (auth.token.email != null && auth.token.email.toLowerCase() === 'koteyca@gmail.com'))",
+        ".write": "auth != null && auth.uid === $uid",
+        "$purchase": {
+          ".validate": "newData.hasChildren(['plan', 'offer', 'createdAt'])",
+          "plan": {
+            ".validate": "newData.val().matches(/^(pro|premium)$/)"
+          },
+          "offer": {
+            ".validate": "newData.val().matches(/^(7d|1m|forever)$/)"
+          },
+          "createdAt": {
+            ".validate": "newData.isNumber() && newData.val() <= now"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "xsafety-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/web/"
+  },
+  "dependencies": {
+    "jsdom": "^25.0.1"
+  }
+}

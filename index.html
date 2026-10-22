@@ -1,46 +1,132 @@
 <!DOCTYPE html>
-<html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>XSafety — сканер вирусов</title><link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="css/style.css"></head>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com; style-src 'self'; img-src 'self' data:; connect-src 'self' https://*.googleapis.com https://*.google.com https://*.firebaseio.com wss://*.firebaseio.com https://*.cloudfunctions.net https://*.firebaseapp.com; frame-src 'self' https://*.firebaseapp.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'self' https:">
+<meta name="description" content="XSafety — статический сканер файлов: BAT, Python, JS, PowerShell, VBS, HTA, DLL, ZIP, EXE и JAR. Работает в браузере, файлы никуда не отправляются.">
+<title>XSafety — сканер файлов</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/style.css">
+</head>
 <body>
-<header><div class="logo">🛡️ XSafety</div>
-  <nav id="userBar" class="hidden">
-    <span id="userEmail"></span> <span id="userPlan" class="badge"></span>
-    <button id="navScan">Сканер</button><button id="navPlans">Тарифы</button><button id="navHistory">История</button>
-    <button id="adminBtn" class="hidden admin-nav" disabled>👑 Админ</button><button id="logoutBtn">Выйти</button>
-  </nav></header>
+<header class="topbar">
+  <a class="logo" href="#scanner" aria-label="XSafety">
+    <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
+      <path d="M16 2 4 7v9c0 7 5 12 12 14 7-2 12-7 12-14V7L16 2Z" fill="none" stroke="currentColor" stroke-width="2.4"/>
+      <path d="m10 16 4.5 4.5L22.5 12" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+    </svg>
+    <span>XSafety</span>
+  </a>
+  <nav id="userBar" class="nav hidden" aria-label="Разделы">
+    <button id="navScan" class="nav-btn is-active" type="button">Сканер</button>
+    <button id="navPlans" class="nav-btn" type="button">Тарифы</button>
+    <button id="navHistory" class="nav-btn" type="button">История</button>
+    <button id="adminBtn" class="nav-btn hidden" type="button" disabled>Админ</button>
+  </nav>
+  <div id="accountBar" class="account hidden">
+    <span id="userEmail" class="account-email"></span>
+    <span id="userPlan" class="badge">Default</span>
+    <button id="logoutBtn" class="ghost" type="button">Выйти</button>
+  </div>
+</header>
+
 <main>
-  <section id="authView" class="view card">
-    <h1>🛡️ XSafety</h1><p class="sub">Сканер вирусов на моделях XSafety 1 • 2 • 3 Lite • 3 Pro</p>
-    <label>Логин (Gmail подставится автоматически)</label>
-    <div class="gmail-row"><input id="loginInput" placeholder="например: ivan.petrov" autocomplete="username"><span>@gmail.com</span></div>
-    <label>Пароль</label><input id="passInput" type="password" placeholder="минимум 6 символов" autocomplete="current-password">
-    <div class="row"><button id="loginBtn" class="primary">Войти</button><button id="registerBtn">Регистрация</button></div>
-    <p class="hint">Пиши только имя почты — <b>@gmail.com</b> добавится сам.</p>
+  <section id="authView" class="view auth card">
+    <h1>Сканер файлов XSafety</h1>
+    <p class="sub">Проверяет BAT, Python, JS, PowerShell, VBS, HTA, DLL, архивы, EXE и JAR. Файл не покидает браузер.</p>
+    <form id="authForm" autocomplete="on">
+      <label for="loginInput">Логин Gmail</label>
+      <div class="gmail-row">
+        <input id="loginInput" name="username" placeholder="ivan.petrov" autocomplete="username" required>
+        <span>@gmail.com</span>
+      </div>
+      <label for="passInput">Пароль</label>
+      <input id="passInput" type="password" name="password" placeholder="минимум 6 символов" autocomplete="current-password" required>
+      <div class="row">
+        <button id="loginBtn" class="primary" type="button">Войти</button>
+        <button id="registerBtn" class="ghost" type="button">Регистрация</button>
+      </div>
+    </form>
+    <p class="hint">Аккаунты и история хранятся в Firebase, вход — по Gmail-адресу. Пишите только имя почты, домен добавится сам.</p>
   </section>
 
   <section id="scanView" class="view card hidden">
-    <h2>🔍 Сканирование файла</h2>
-    <div id="modelGrid" class="model-grid"></div>
-    <input type="file" id="fileInput">
-    <div class="progress-wrap"><div id="progress"></div></div>
-    <button id="scanBtn" class="primary big">Сканировать</button>
-    <div id="result"></div>
+    <div class="section-head">
+      <div>
+        <h2>Сканирование файла</h2>
+        <p class="sub">Лимиты обновляются каждые 24 часа в 00:00 UTC. Модели вне тарифа лимитов не получают.</p>
+      </div>
+      <div class="refill" id="refillBox">
+        <span class="refill-label">До обновления лимитов</span>
+        <strong id="refillTime">—</strong>
+      </div>
+    </div>
+
+    <div id="modelGrid" class="model-grid" role="radiogroup" aria-label="Модель проверки"></div>
+
+    <div id="dropZone" class="drop-zone" tabindex="0">
+      <input type="file" id="fileInput" hidden>
+      <p class="drop-title">Перетащите файл сюда или нажмите, чтобы выбрать</p>
+      <p class="drop-sub" id="dropHint">Допустимые расширения зависят от модели</p>
+      <p class="drop-file" id="fileName"></p>
+    </div>
+
+    <div class="progress-wrap" aria-hidden="true"><div id="progress" class="progress-bar"></div></div>
+    <button id="scanBtn" class="primary big" type="button">Сканировать</button>
+
+    <div id="result" class="result" aria-live="polite"></div>
   </section>
 
-  <section id="plansView" class="view card hidden"><h2>💎 Тарифы и модели</h2><div id="plansGrid" class="plans"></div>
-    <div class="card inner"><h3>Что умеют модели</h3>
-    <p><b>XSafety 1</b> — только .bat и .py, базовый уровень детекта.</p>
-    <p><b>XSafety 2</b> — .bat, .py, .js, .vbs, .vbe, .hta, лучше видит обфускацию.</p>
-    <p><b>XSafety 3 Lite</b> — всё из v2 + Office-макросы (.docm/.xlsm/.pptm…), старые .doc/.xls/.ppt, архивы .zip/.rar/.7z/.tar/.gz, образы .iso/.img/.vhd/.vhdx, .jar, .pyw, .dll, .jse, PowerShell (.ps1/.ps1xml/.ps2/.ps2xml/.psc1/.psc2). Очень крутой анализ.</p>
-    <p><b>XSafety 3 Pro</b> — любые файлы, максимум: зашифрованные вирусы, энтропия, shellcode, анти-анализ, распаковка ZIP. Никто не пролезет 😎</p></div>
+  <section id="plansView" class="view card hidden">
+    <h2>Тарифы и модели</h2>
+    <p class="sub">Цены в гривнах. Скидка уже включена в цену и показана рядом со старой стоимостью.</p>
+    <div id="plansGrid" class="plans"></div>
+    <div class="card inner">
+      <h3>Что входит в модели</h3>
+      <div id="modelInfo" class="model-info"></div>
+    </div>
+    <p class="hint">Оплата в демо-режиме: тариф активируется сразу, деньги не списываются. Серьёзные тарифы на живой оплате подключаются отдельно.</p>
   </section>
 
-  <section id="historyView" class="view card hidden"><h2>🗂 История сканирований</h2><div id="historyList"></div></section>
+  <section id="historyView" class="view card hidden">
+    <div class="section-head">
+      <h2>История проверок</h2>
+      <button id="historyRefresh" class="ghost" type="button">Обновить</button>
+    </div>
+    <div id="historyList" class="history"></div>
+  </section>
 
-  <section id="adminView" class="view card hidden"><h2>👑 Админ-панель</h2>
-    <p class="hint">Подписки, лимиты, баны. Доступ только у Koteyca@gmail.com</p>
-    <button id="adminRefresh">🔄 Обновить</button><div id="adminList"></div></section>
+  <section id="adminView" class="view card hidden">
+    <h2>Админ-панель</h2>
+    <p class="sub">Тарифы, лимиты и баны. Доступ только у владельца.</p>
+    <div class="section-head">
+      <button id="adminRefresh" class="ghost" type="button">Обновить</button>
+      <input id="adminSearch" class="search" placeholder="Поиск по почте" autocomplete="off">
+    </div>
+    <div id="adminList" class="admin-list"></div>
+  </section>
 </main>
-<div id="toast" class="toast"></div>
+
+<footer class="footer">
+  <span>XSafety 2.0 · статическая сборка для GitHub Pages</span>
+  <span>Сигнатуры хранятся в LDR-виде, файлы не передаются на сервер</span>
+</footer>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-card">
+    <h3 id="modalTitle"></h3>
+    <div id="modalBody" class="modal-body"></div>
+    <div class="modal-actions">
+      <button id="modalCancel" class="ghost" type="button">Отмена</button>
+      <button id="modalOk" class="primary" type="button">Подтвердить</button>
+    </div>
+  </div>
+</div>
+
 <script type="module" src="js/app.js"></script>
-</body></html>
+</body>
+</html>

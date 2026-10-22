@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="XSafety — локальный статический анализ файлов: сигнатуры для .bat, .py, .js, .ps1, .vbs, .hta, .dll, .zip, .exe и .jar с суточными лимитами по тарифам.">
+<meta name="theme-color" content="#070b14">
+<meta name="robots" content="noindex, nofollow">
+<title>XSafety — проверка файлов до запуска</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<div class="bg" aria-hidden="true">
+  <div class="bg-glow bg-glow-a"></div>
+  <div class="bg-glow bg-glow-b"></div>
+  <div class="bg-grid"></div>
+</div>
+
+<header class="topbar">
+  <a class="brand" href="#scanner" data-nav="scanner" aria-label="XSafety — на главную">
+    <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+      <path d="M16 2.8 27 7v8.6c0 6.6-4.5 11.4-11 13.6C9.5 27 5 22.2 5 15.6V7l11-4.2Z" fill="url(#g1)" stroke="rgba(255,255,255,.28)" stroke-width="1"/>
+      <path d="m11 16.2 3.4 3.4 6.6-7" fill="none" stroke="#07111f" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <defs>
+        <linearGradient id="g1" x1="5" y1="4" x2="27" y2="28" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#5eead4"/><stop offset="1" stop-color="#7c9cff"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    <span class="brand-text">XSafety</span>
+    <span class="brand-tag">beta</span>
+  </a>
+
+  <nav class="tabs" aria-label="Разделы">
+    <button class="tab is-active" data-nav="scanner" type="button">Сканер</button>
+    <button class="tab" data-nav="pricing" type="button">Тарифы</button>
+    <button class="tab" data-nav="history" type="button">История</button>
+  </nav>
+
+  <div class="top-actions">
+    <span class="refill-pill" id="refillPill" hidden>
+      <span class="dot"></span>
+      <span>Сброс лимитов через</span>
+      <b id="refillTime">—</b>
+    </span>
+    <button class="user-chip" id="userChip" type="button" hidden>
+      <span class="avatar" id="userAvatar">?</span>
+      <span class="user-meta">
+        <b id="userEmail">—</b>
+        <span id="userPlan">—</span>
+      </span>
+    </button>
+    <button class="btn btn-ghost" id="loginBtn" type="button">Войти</button>
+  </div>
+</header>
+
+<main>
+  <!-- ======================= СКАНЕР ======================= -->
+  <section class="view" id="view-scanner">
+    <div class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="pulse"></span>Статический анализ · файл не запускается</div>
+        <h1>Проверьте файл<br><span class="grad">до запуска</span></h1>
+        <p class="lead">
+          XSafety разбирает структуру файла, ищет опасные команды, обфускацию,
+          упакованные секции и подозрительные импорты. Загруженный файл никуда
+          не сохраняется и не исполняется.
+        </p>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <b id="statRules">—</b>
+            <span>сигнатур в движке</span>
+          </div>
+          <div class="hero-stat">
+            <b>4</b>
+            <span>модели проверки</span>
+          </div>
+          <div class="hero-stat">
+            <b>24 ч</b>
+            <span>цикл начисления лимитов</span>
+          </div>
+        </div>
+        <div class="hero-points">
+          <div><span class="tick">✓</span> Без загрузки на сторонние серверы</div>
+          <div><span class="tick">✓</span> HTML-отчёт по каждой находке</div>
+          <div><span class="tick">✓</span> Лимиты по тарифу и модели</div>
+        </div>
+      </div>
+
+      <div class="scan-card card">
+        <div class="card-head">
+          <div>
+            <h2>Новая проверка</h2>
+            <p class="muted" id="quotaHint">Выберите модель и файл</p>
+          </div>
+          <span class="badge badge-soft" id="planBadge">Default</span>
+        </div>
+
+        <div class="model-grid" id="modelGrid" role="radiogroup" aria-label="Модель проверки"></div>
+
+        <div class="drop" id="dropZone" tabindex="0" role="button" aria-label="Выберите файл для проверки">
+          <input type="file" id="fileInput" hidden>
+          <div class="drop-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 16V4m0 0 4 4m-4-4L8 8"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>
+            </svg>
+          </div>
+          <div class="drop-title" id="dropTitle">Перетащите файл сюда</div>
+          <div class="drop-sub" id="dropSub">или нажмите, чтобы выбрать · до 64 МБ</div>
+          <div class="drop-file" id="dropFile" hidden></div>
+        </div>
+
+        <div class="scan-row">
+          <div class="scan-file" id="fileInfo">Файл не выбран</div>
+          <button class="btn btn-primary" id="scanBtn" type="button" disabled>
+            <span class="btn-label">Проверить</span>
+            <span class="spinner" hidden></span>
+          </button>
+        </div>
+        <div class="scan-progress" id="scanProgress" hidden>
+          <div class="bar"><i></i></div>
+          <span>Анализ сигнатурами…</span>
+        </div>
+      </div>
+    </div>
+
+    <section class="result card" id="resultSection" hidden aria-live="polite"></section>
+
+    <section class="how">
+      <div class="how-item card">
+        <span class="how-num">01</span>
+        <h3>Выберите модель</h3>
+        <p>Чем старше модель, тем больше расширений она проверяет — от скриптов до EXE и JAR.</p>
+      </div>
+      <div class="how-item card">
+        <span class="how-num">02</span>
+        <h3>Загрузите файл</h3>
+        <p>Файл читается в память, ограничивается по размеру и проверяется сигнатурами без запуска.</p>
+      </div>
+      <div class="how-item card">
+        <span class="how-num">03</span>
+        <h3>Получите отчёт</h3>
+        <p>Вердикт, серьёзность, доказательства и рекомендации. Отчёт можно скачать в HTML.</p>
+      </div>
+    </section>
+  </section>
+
+  <!-- ======================= ТАРИФЫ ======================= -->
+  <section class="view" id="view-pricing" hidden>
+    <header class="section-head">
+      <div class="eyebrow"><span class="pulse"></span>Тарифы</div>
+      <h1>Лимиты на каждые 24 часа</h1>
+      <p class="lead">
+        Счётчики обнуляются раз в сутки. Если модели нет в тарифе — она недоступна,
+        и новые лимиты на неё не начисляются: это не «серый» статус, а отсутствие доступа.
+      </p>
+    </header>
+    <div class="plans" id="planGrid"></div>
+    <div class="fineprint card">
+      <h3>Как считаются лимиты</h3>
+      <ul>
+        <li>Окно — 24 часа по UTC, у каждой модели свой счётчик запросов и объёма.</li>
+        <li>Запрос списывается при успешной постановке файла в проверку; размер — при загрузке.</li>
+        <li>Модели вне тарифа помечены как «недоступно»: лимиты на них не начисляются.</li>
+        <li>Оплата в демо-режиме не списывается: тариф активируется сразу для проверки логики.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ======================= ИСТОРИЯ ======================= -->
+  <section class="view" id="view-history" hidden>
+    <header class="section-head">
+      <div class="eyebrow"><span class="pulse"></span>История</div>
+      <h1>Последние проверки</h1>
+      <p class="lead">Хранятся последние 100 отчётов аккаунта. Отчёт открывается в отдельной вкладке.</p>
+    </header>
+    <div class="history" id="historyList"></div>
+  </section>
+</main>
+
+<footer class="footer">
+  <span>XSafety · статический анализ без запуска файлов</span>
+  <span class="footer-sep">·</span>
+  <a href="#pricing" data-nav="pricing">Тарифы</a>
+  <span class="footer-sep">·</span>
+  <span>Демо-оплата: списаний нет</span>
+</footer>
+
+<!-- ======================= МОДАЛКИ ======================= -->
+<div class="modal" id="authModal" hidden>
+  <div class="modal-backdrop" data-close="auth"></div>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <button class="modal-close" type="button" data-close="auth" aria-label="Закрыть">×</button>
+    <h2 id="authTitle">Вход в XSafety</h2>
+    <div class="segmented" role="tablist" aria-label="Вход или регистрация">
+      <button class="seg is-active" type="button" data-auth-tab="login">Вход</button>
+      <button class="seg" type="button" data-auth-tab="register">Регистрация</button>
+    </div>
+    <form id="authForm" novalidate>
+      <label class="field">
+        <span>E-mail</span>
+        <input type="email" id="authEmail" name="email" autocomplete="email" maxlength="254" required placeholder="you@example.com">
+      </label>
+      <label class="field">
+        <span>Пароль</span>
+        <input type="password" id="authPassword" name="password" autocomplete="current-password" maxlength="128" required placeholder="Минимум 8 символов">
+      </label>
+      <p class="form-error" id="authError" role="alert" hidden></p>
+      <button class="btn btn-primary btn-block" id="authSubmit" type="submit">Войти</button>
+      <p class="form-note" id="authNote">Нет аккаунта? Переключитесь на регистрацию — это займёт несколько секунд.</p>
+    </form>
+  </div>
+</div>
+
+<div class="modal" id="purchaseModal" hidden>
+  <div class="modal-backdrop" data-close="purchase"></div>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="purchaseTitle">
+    <button class="modal-close" type="button" data-close="purchase" aria-label="Закрыть">×</button>
+    <h2 id="purchaseTitle">Подключение тарифа</h2>
+    <div class="purchase-summary" id="purchaseSummary"></div>
+    <p class="form-note">
+      Демо-режим: реальная оплата не проводится, сумма не списывается.
+      Тариф активируется сразу, чтобы проверить лимиты и доступ к моделям.
+    </p>
+    <p class="form-error" id="purchaseError" role="alert" hidden></p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" type="button" data-close="purchase">Отмена</button>
+      <button class="btn btn-primary" id="purchaseConfirm" type="button">Активировать</button>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
+
+<script src="/static/app.js" defer></script>
+</body>
+</html>
