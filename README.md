@@ -101,6 +101,9 @@ GitHub Pages пересоберёт сайт автоматически (ист�
 
 1. В проекте Firebase включены **Authentication → Email/Password** и
    **Realtime Database**.
+   ⚠️ Без обновлённых правил сайт не сможет записывать лимиты и историю:
+   старые правила ждут числовой `usage`, а новая схема — объект
+   `{count, bytes, period}`.
 2. Правила лежат в `database.rules.json`. Применить:
    ```bash
    firebase deploy --only database --project antivirus-1f569
