@@ -13,6 +13,11 @@
 
 Живой сайт: **https://koteycagames.github.io/XSafety/**
 
+> **Публикация.** GitHub Pages должен собирать сайт из ветки
+> `arena/e4e4df9d-xsafety` (Settings → Pages → Source → Deploy from a branch
+> → эта ветка → `/ (root)`). Если в настройках указана другая ветка, сайт
+> будет показывать старую версию, сколько бы раз вы ни пушили.
+
 ---
 
 ## Модели и расширения
