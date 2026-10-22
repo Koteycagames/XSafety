@@ -1,0 +1,19 @@
+# локальная база и артефакты запуска
+var/
+*.db
+*.db-wal
+*.db-shm
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+.coverage
+htmlcov/
+
+# редакторы/ОС
+.DS_Store
+.idea/
+.vscode/
