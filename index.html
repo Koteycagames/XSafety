@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>XSafety — сканер вирусов</title><link rel="stylesheet" href="css/style.css"></head>
+<body>
+<header><div class="logo">🛡️ XSafety</div>
+  <nav id="userBar" class="hidden">
+    <span id="userEmail"></span> <span id="userPlan" class="badge"></span>
+    <button id="navScan">Сканер</button><button id="navPlans">Тарифы</button><button id="navHistory">История</button>
+    <button id="adminBtn" class="hidden admin-nav">👑 Админ</button><button id="logoutBtn">Выйти</button>
+  </nav></header>
+<main>
+  <section id="authView" class="view card">
+    <h1>🛡️ XSafety</h1><p class="sub">Сканер вирусов на моделях XSafety 1 • 2 • 3 Lite • 3 Pro</p>
+    <label>Логин (Gmail подставится автоматически)</label>
+    <div class="gmail-row"><input id="loginInput" placeholder="например: ivan.petrov" autocomplete="username"><span>@gmail.com</span></div>
+    <label>Пароль</label><input id="passInput" type="password" placeholder="минимум 6 символов" autocomplete="current-password">
+    <div class="row"><button id="loginBtn" class="primary">Войти</button><button id="registerBtn">Регистрация</button></div>
+    <p class="hint">Пиши только имя почты — <b>@gmail.com</b> добавится сам.</p>
+  </section>
+
+  <section id="scanView" class="view card hidden">
+    <h2>🔍 Сканирование файла</h2>
+    <div id="modelGrid" class="model-grid"></div>
+    <input type="file" id="fileInput">
+    <div class="progress-wrap"><div id="progress"></div></div>
+    <button id="scanBtn" class="primary big">Сканировать</button>
+    <div id="result"></div>
+  </section>
+
+  <section id="plansView" class="view card hidden"><h2>💎 Тарифы и модели</h2><div id="plansGrid" class="plans"></div>
+    <div class="card inner"><h3>Что умеют модели</h3>
+    <p><b>XSafety 1</b> — только .bat и .py, базовый уровень детекта.</p>
+    <p><b>XSafety 2</b> — .bat, .py, .js, .vbs, .vbe, .hta, лучше видит обфускацию.</p>
+    <p><b>XSafety 3 Lite</b> — всё из v2 + Office-макросы (.docm/.xlsm/.pptm…), старые .doc/.xls/.ppt, архивы .zip/.rar/.7z/.tar/.gz, образы .iso/.img/.vhd/.vhdx, .jar, .pyw, .dll, .jse, PowerShell (.ps1/.ps1xml/.ps2/.ps2xml/.psc1/.psc2). Очень крутой анализ.</p>
+    <p><b>XSafety 3 Pro</b> — любые файлы, максимум: зашифрованные вирусы, энтропия, shellcode, анти-анализ, распаковка ZIP. Никто не пролезет 😎</p></div>
+  </section>
+
+  <section id="historyView" class="view card hidden"><h2>🗂 История сканирований</h2><div id="historyList"></div></section>
+
+  <section id="adminView" class="view card hidden"><h2>👑 Админ-панель</h2>
+    <p class="hint">Подписки, лимиты, баны. Доступ только у Koteyca@gmail.com</p>
+    <button id="adminRefresh">🔄 Обновить</button><div id="adminList"></div></section>
+</main>
+<div id="toast" class="toast"></div>
+<script type="module" src="js/app.js"></script>
+</body></html>

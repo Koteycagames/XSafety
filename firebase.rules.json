@@ -1,0 +1,21 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('email').val().toLowerCase() === 'Koteyca@gmail.com')",
+        ".write": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('email').val().toLowerCase() === 'Koteyca@gmail.com')",
+        "plan":   { ".validate": "(!data.exists() && newData.val() === 'default') || newData.val() === data.val() || root.child('users').child(auth.uid).child('email').val().toLowerCase() === 'Koteyca@gmail.com'" },
+        "banned": { ".validate": "(!data.exists() && newData.val() === false) || newData.val() === data.val() || root.child('users').child(auth.uid).child('email').val().toLowerCase() === 'Koteyca@gmail.com'" },
+        "extra":  { ".validate": "!data.exists() || newData.val() === data.val() || root.child('users').child(auth.uid).child('email').val().toLowerCase() === 'Koteyca@gmail.com'" }
+      },
+      ".read": "auth != null && root.child('users').child(auth.uid).child('email').val().toLowerCase() === 'Koteyca@gmail.com'",
+      ".write": "auth != null && root.child('users').child(auth.uid).child('email').val().toLowerCase() === 'Koteyca@gmail.com'"
+    },
+    "scans": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('email').val().toLowerCase() === 'Koteyca@gmail.com')",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    }
+  }
+}

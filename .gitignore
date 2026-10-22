@@ -1,0 +1,9 @@
+# Firebase config with real keys - NEVER commit
+js/firebase-config.js
+firebase-config.js
+*.local.js
+.env
+.env.*
+node_modules/
+.DS_Store
+.vscode/
