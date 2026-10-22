@@ -21,15 +21,13 @@
         },
         "usage": {
           "$model": {
-            ".validate": "newData.isNumber() && newData.val() >= 0 && ((!data.exists() && newData.val() === 0) || auth.token.email === 'Koteyca@gmail.com' || newData.val() === data.val() || newData.val() === data.val() + 1)"
-          },
-          "$other": { ".validate": false }
+            ".validate": "($model === 'v1' || $model === 'v2' || $model === 'lite' || $model === 'pro') && newData.isNumber() && newData.val() >= 0 && ((!data.exists() && newData.val() === 0) || auth.token.email === 'Koteyca@gmail.com' || newData.val() === data.val() || newData.val() === data.val() + 1)"
+          }
         },
         "extra": {
           "$model": {
-            ".validate": "newData.isNumber() && newData.val() >= 0 && ((!data.exists() && newData.val() === 0) || newData.val() === data.val() || auth.token.email === 'Koteyca@gmail.com')"
-          },
-          "$other": { ".validate": false }
+            ".validate": "($model === 'v1' || $model === 'v2' || $model === 'lite' || $model === 'pro') && newData.isNumber() && newData.val() >= 0 && ((!data.exists() && newData.val() === 0) || newData.val() === data.val() || auth.token.email === 'Koteyca@gmail.com')"
+          }
         },
         "$other": { ".validate": false }
       }
