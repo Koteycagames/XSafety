@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import ast
+import re
 from pathlib import Path
 
 import pytest
@@ -17,7 +19,7 @@ from xsafety.auth import (
     verify_password,
 )
 from xsafety.report import build_html_report, result_from_dict
-from xsafety.scan.ldr import B, L, encode_bytes, encode_text
+from xsafety.scan.ldr import B, L, _decode, encode_bytes, encode_text
 from xsafety.scan.signatures import RULES
 from xsafety.scan.types import Finding, ScanResult, Severity
 from xsafety.storage import MAX_HISTORY, Storage
@@ -39,6 +41,42 @@ def test_ldr_roundtrip():
         assert L(token) == value
     binary = b"\x00\x01MZ\xff"
     assert B(encode_bytes(binary)) == binary
+
+
+TOKEN_SHAPE = re.compile(r"[A-Za-z0-9_-]{12,}")
+
+
+def _ldr_literals() -> list[str]:
+    tokens: list[str] = []
+    for path in sorted(SIGNATURE_DIR.glob("*.py")) + [ROOT / "xsafety" / "scan" / "sigutil.py"]:
+        tree = ast.parse(path.read_text())
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            func = node.func
+            if not isinstance(func, ast.Name) or func.id not in {"L", "B"}:
+                continue
+            for argument in node.args:
+                assert not isinstance(argument, ast.Call), f"{path.name}: вложенный LDR-вызов"
+                if isinstance(argument, ast.Constant) and isinstance(argument.value, str):
+                    tokens.append(argument.value)
+    return tokens
+
+
+def test_no_double_encoded_tokens():
+    """Двойное кодирование превратило бы паттерн в токен L(...)."""
+    nested = []
+    for token in _ldr_literals():
+        value = _decode(token)
+        if not TOKEN_SHAPE.fullmatch(value.decode("utf-8", "replace")):
+            continue
+        try:
+            inner = _decode(value.decode("ascii"))
+        except Exception:  # noqa: BLE001 - обычный текст не декодируется
+            continue
+        if inner and all(32 <= byte < 127 for byte in inner):
+            nested.append((token, inner))
+    assert nested == [], f"вложенные LDR-маркеры: {nested[:3]}"
 
 
 def test_signature_modules_have_encoded_rules():
