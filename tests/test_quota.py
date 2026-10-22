@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import concurrent.futures
+import uuid
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -17,7 +18,7 @@ MB = 1024 * 1024
 
 
 def make_user(storage: Storage, plan: str = "default", until: datetime | None = None):
-    user = storage.create_user(f"{plan}-{id(storage)}@example.com", "hash")
+    user = storage.create_user(f"{plan}-{uuid.uuid4().hex[:10]}@example.com", "hash")
     if plan != "default":
         user = storage.set_plan(user.id, plan, until, "1m")
     assert user is not None

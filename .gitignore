@@ -17,3 +17,7 @@ htmlcov/
 .DS_Store
 .idea/
 .vscode/
+
+# Node (тесты интерфейса)
+node_modules/
+package-lock.json
