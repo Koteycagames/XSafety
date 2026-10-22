@@ -3,7 +3,9 @@ import { PLANS, MODELS } from "./plans.js";
 export function renderAdmin(db, ref, get, update, toast){
   const box = document.getElementById("adminList");
   async function load(){
-    const snap = await get(ref(db, "users"));
+    let snap;
+    try{ snap = await get(ref(db, "users")); }
+    catch(e){ console.warn("[XSafety] admin:", e.code||e.message); box.innerHTML="<p>⚠️ Админка не может прочитать пользователей: в Firebase не опубликованы правила из <b>firebase.rules.json</b> (Realtime Database → Rules → Publish). Доступ к списку есть только у Koteyca@gmail.com.</p>"; return; }
     if(!snap.exists()){ box.innerHTML="<p>Пользователей нет</p>"; return; }
     const users = Object.entries(snap.val());
     box.innerHTML = users.map(([uid,u])=>`<div class="admin-row">

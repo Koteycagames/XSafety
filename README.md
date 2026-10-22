@@ -26,9 +26,16 @@
 Шаблон: `js/firebase-config.example.js` (скопировать → `js/firebase-config.js` → вставить свои ключи).
 
 ## Настройка Firebase (один раз)
-1. Firebase Console → **Authentication** → включить **Email/Password**.
-2. **Realtime Database** → создать базу → в **Rules** вставить правила из `firebase.rules.json` → Publish.
+1. Firebase Console → **Authentication** → включить **Email/Password**. (Без этого вход даёт `400` на identitytoolkit/securetoken.)
+2. **Realtime Database** → создать базу → в **Rules** вставить правила из `firebase.rules.json` → Publish. (Без этого всё сыпет `Permission denied`.)
 3. Зарегистрироваться как `Koteyca` (пароль свой) — этот аккаунт автоматически админ.
+
+### 🔒 Что защищают правила `firebase.rules.json`
+- Без входа доступа нет никуда; каждый видит и пишет **только свои** данные (`auth.uid`).
+- Админ — только по email в токене Firebase Auth (`Koteyca@gmail.com`), подделать нельзя.
+- `plan`, `banned` и `extra` (доп. лимиты) юзер сам себе изменить **не может** — только админ (`.validate`).
+- `usage` юзер может лишь увеличить на +1 за скан; сброс — только админ.
+- В `scans` нельзя писать мусор: обязательные поля, `score` 0–100, вердикт только из списка, размер имени ≤ 300.
 
 ## Структура
 ```

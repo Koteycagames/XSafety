@@ -72,18 +72,23 @@ async function runScan(){
   if(!modelAllowsFile(selectedModel, file.name)) return toast(`❌ ${MODELS[selectedModel].name} не сканирует .${extOf(file.name)}`, false);
   if(file.size > lim.maxMB*1024*1024) return toast(`❌ Файл больше лимита ${lim.maxMB} МБ для вашего тарифа`, false);
   if(remaining(selectedModel)<=0) return toast("❌ Запросы по этой модели закончились. Нужен тариф выше или лимиты от админа", false);
-  $("#scanBtn").disabled=true; $("#result").innerHTML=""; 
-  const res = await scanFile(file, selectedModel, p=>{ $("#progress").style.width=p+"%"; });
-  // Списываем запрос и сохраняем результат в Realtime Database
-  await update(ref(db,`users/${currentUser.uid}/usage`), { [selectedModel]:(userDoc.usage?.[selectedModel]||0)+1 });
-  userDoc.usage[selectedModel]=(userDoc.usage?.[selectedModel]||0)+1;
-  await push(ref(db,`scans/${currentUser.uid}`), res);
-  const cls = res.verdict==="ОПАСНО"?"bad":res.verdict==="ПОДОЗРИТЕЛЬНО"?"warn":"good";
-  $("#result").innerHTML=`<div class="verdict ${cls}"><h2>${res.verdict==="ЧИСТО"?"✅":res.verdict==="ОПАСНО"?"🦠":"⚠️"} ${res.verdict} — ${res.score}/100</h2>
-    <p>${res.fileName} • ${(res.size/1024).toFixed(1)} КБ • ${MODELS[selectedModel].name} • энтропия ${res.entropy}</p>
-    <p class="hash">SHA-256: ${res.sha256}</p>
-    ${res.findings.length?`<ul>${res.findings.map(f=>`<li><b>[+${f.score}] ${f.cat}</b> — <code>${escapeHtml(f.detail)}</code></li>`).join("")}</ul>`:"<p>Опасных сигнатур не найдено.</p>"}</div>`;
-  $("#scanBtn").disabled=false; renderModels(); toast("Сканирование завершено");
+  $("#scanBtn").disabled=true; $("#result").innerHTML="";
+  try{
+    const res = await scanFile(file, selectedModel, p=>{ $("#progress").style.width=p+"%"; });
+    // Списываем запрос и сохраняем результат в Realtime Database (если база отклонит — вердикт всё равно покажем)
+    try{
+      await update(ref(db,`users/${currentUser.uid}/usage`), { [selectedModel]:(userDoc.usage?.[selectedModel]||0)+1 });
+      userDoc.usage[selectedModel]=(userDoc.usage?.[selectedModel]||0)+1;
+      await push(ref(db,`scans/${currentUser.uid}`), res);
+    }catch(e){ dbFail(e); }
+    const cls = res.verdict==="ОПАСНО"?"bad":res.verdict==="ПОДОЗРИТЕЛЬНО"?"warn":"good";
+    $("#result").innerHTML=`<div class="verdict ${cls}"><h2>${res.verdict==="ЧИСТО"?"✅":res.verdict==="ОПАСНО"?"🦠":"⚠️"} ${res.verdict} — ${res.score}/100</h2>
+      <p>${escapeHtml(res.fileName)} • ${(res.size/1024).toFixed(1)} КБ • ${MODELS[selectedModel].name} • энтропия ${res.entropy}</p>
+      <p class="hash">SHA-256: ${res.sha256}</p>
+      ${res.findings.length?`<ul>${res.findings.map(f=>`<li><b>[+${f.score}] ${f.cat}</b> — <code>${escapeHtml(f.detail)}</code></li>`).join("")}</ul>`:"<p>Опасных сигнатур не найдено.</p>"}</div>`;
+    renderModels(); toast("Сканирование завершено");
+  }catch(e){ toast("Ошибка сканирования: "+e.message, false); }
+  finally{ $("#scanBtn").disabled=false; }
 }
 const escapeHtml=s=>s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 $("#scanBtn").onclick=runScan;
