@@ -1,7 +1,6 @@
-# Firebase config with real keys - NEVER commit
-js/firebase-config.js
-firebase-config.js
-*.local.js
+# Firebase web config (js/firebase-config.js) is PUBLIC by design for GitHub Pages:
+# apiKey is not a secret for web apps - protection is via Firebase Rules + Auth.
+# Real secrets must NEVER be committed.
 .env
 .env.*
 node_modules/

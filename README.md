@@ -1,6 +1,6 @@
 # 🛡️ XSafety — сканер вирусов
 
-Веб-сканер файлов на Firebase (Auth + Realtime Database). Запуск — просто **Live Server** для `index.html` (без сборки).
+Веб-сканер файлов на Firebase (Auth + Realtime Database). Работает сразу на **GitHub Pages** (без сборки): https://Koteycagames.github.io/XSafety/
 
 ## Модели и тарифы
 | Тариф | XSafety 1 | XSafety 2 | XSafety 3 Lite | XSafety 3 Pro |
