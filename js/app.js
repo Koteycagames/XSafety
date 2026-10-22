@@ -35,9 +35,14 @@ onAuthStateChanged(auth, async user=>{
   $("#userBar").classList.remove("hidden");
   $("#userEmail").textContent=user.email;
   $("#userPlan").textContent = PLANS[userDoc.plan]?.name || "Default";
-  $("#adminBtn").classList.toggle("hidden", !isAdminEmail(user.email));
+  const adminBtn=$("#adminBtn");
+  const admin=isAdminEmail(user.email);
+  adminBtn.classList.remove("hidden");
+  adminBtn.disabled=!admin;
+  adminBtn.classList.toggle("admin-disabled",!admin);
+  adminBtn.title=admin?"":"Доступно только администратору";
   showView("scanView"); renderModels(); renderHistory();
-  if(isAdminEmail(user.email)) renderAdmin(db, ref, get, update, toast);
+  if(admin) renderAdmin(db, ref, get, update, toast);
 });
 
 // ---------- VIEWS ----------
@@ -45,7 +50,7 @@ function showView(id){ document.querySelectorAll(".view").forEach(v=>v.classList
 $("#navScan").onclick=()=>showView("scanView");
 $("#navPlans").onclick=()=>showView("plansView");
 $("#navHistory").onclick=()=>{showView("historyView"); renderHistory();};
-$("#adminBtn").onclick=()=>showView("adminView");
+$("#adminBtn").onclick=()=>{ if(!isAdminEmail((currentUser||{}).email)){ toast("Это только для администратора", false); return; } showView("adminView"); };
 $("#logoutBtn").onclick=()=>signOut(auth);
 $("#loginBtn").onclick=()=>doAuth("login");
 $("#registerBtn").onclick=()=>doAuth("register");
